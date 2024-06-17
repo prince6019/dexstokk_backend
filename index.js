@@ -10,7 +10,12 @@ const { auth } = require("./middleware/auth");
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+    origin: "http://localhost:5173",
+  })
+);
 
 const uri = process.env.MONGODB_URI;
 console.log("uri : ", uri);
@@ -62,6 +67,7 @@ app.post("/generateWallet", async (req, res) => {
 
     return res.status(200).json({
       token,
+      address: user.address,
     });
   } catch (error) {
     console.log(error);
@@ -115,6 +121,7 @@ app.post("/loginWallet", async (req, res) => {
       res.status(200).json({
         success: true,
         token,
+        address: user.address,
         message: "User Login Success",
       });
     } else {
