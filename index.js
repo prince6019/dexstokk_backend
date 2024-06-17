@@ -116,7 +116,7 @@ app.post("/loginWallet", async (req, res) => {
         {
           expiresIn: "24h",
         }
-      );
+      )
 
       res.status(200).json({
         success: true,
