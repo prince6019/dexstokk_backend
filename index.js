@@ -36,7 +36,7 @@ connect = () => {
 };
 connect();
 
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.post("/generateWallet", async (req, res) => {
   const { password } = req.body;
@@ -201,6 +201,6 @@ app.post("/sendTransaction", auth, async (req, res) => {
 });
 
 // listening on port 3000-----------------
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}`);
 });
