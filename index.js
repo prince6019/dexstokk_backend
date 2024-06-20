@@ -7,8 +7,6 @@ const cors = require("cors");
 const { ethers } = require("ethers");
 const Wallet = require("./models/user");
 const { auth } = require("./middleware/auth");
-const EstokkYam = require("./constants/ContractAddresses");
-const EstokkAbi = require("./constants/ContractAbi");
 
 const { contractAddresses, contractAbi } = require("./constants/contractIndex");
 
