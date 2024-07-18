@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(
   cors({
     credentials: true,
-    origin: "https://erc20-marketplace.vercel.app",
+    origin: ["http://localhost:5173", "https://dexstokkyam.vercel.app/"],
   })
 );
 
@@ -199,6 +199,10 @@ app.post("/sendTransaction", auth, async (req, res) => {
       .json({ error: "Transaction failed", details: error.message });
   }
 });
+
+// app.get("/querSubgraph" , (req,res) =>{
+
+// })
 
 // listening on port 3000-----------------
 app.listen(PORT, () => {
