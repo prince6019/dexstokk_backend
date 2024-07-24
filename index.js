@@ -9,6 +9,7 @@ const Wallet = require("./models/user");
 const { auth } = require("./middleware/auth");
 
 const { contractAddresses, contractAbi } = require("./constants/contractIndex");
+const transactionRouter = require("./routes/transaction");
 
 const app = express();
 app.use(express.json());
@@ -18,9 +19,10 @@ app.use(
     origin: ["http://localhost:5173", "https://dexstokkyam.vercel.app"],
   })
 );
+app.use("/sendTransaction", transactionRouter);
 
 const uri = process.env.MONGODB_URI;
-const ALCHEMY_SEPOLIA_RPC_URL = process.env.ALCHEMY_SEPOLIA_RPC_URL;
+const ALCHEMY_HOLESKY_RPC_URL = process.env.ALCHEMY_HOLESKY_RPC_URL;
 const ALCHEMY_MAINNET_RPC_URL = process.env.ALCHEMY_MAINNET_RPC_URL;
 const ALCHEMY_GNOSIS_RPC_URL = process.env.ALCHEMY_GNOSIS_RPC_URL;
 
@@ -38,104 +40,64 @@ connect();
 
 const PORT = process.env.PORT || 3000;
 
-app.post("/generateWallet", async (req, res) => {
-  const { password } = req.body;
-  console.log("password provided : ", password);
-  if (!password) {
-    return res.status(400).json({ error: "password is required" });
-  }
-  try {
-    // Generate EVM key pair
-    const wallet = ethers.Wallet.createRandom();
-    const privateKey = wallet.privateKey;
-    const publicKey = wallet.address;
-    console.log("privateKey : ", privateKey);
-    console.log("publicKey : ", publicKey);
-
-    const walletfromPrivate = new ethers.Wallet(privateKey);
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("hashed Password", hashedPassword);
-    const jsonFile = await walletfromPrivate.encrypt(hashedPassword);
-    console.log(jsonFile);
-
-    const user = await Wallet.create({
-      address: publicKey,
-      jsonWallet: JSON.stringify(jsonFile),
-      password: hashedPassword,
-    });
-
-    const token = jwt.sign({ address: user.address }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
-
-    return res.status(200).json({
-      token,
-      address: user.address,
-    });
-  } catch (error) {
-    console.log(error);
-    return res
-      .status(500)
-      .json({ message: "wallet cannot be created , Please try again." });
-  }
-});
-
-app.get("/backupWallet", auth, async (req, res) => {
-  const { address } = req.user;
-  console.log("address of wallet : ", address);
-  try {
-    const user = await Wallet.findOne({ address });
-    return res.status(200).json({ user });
-  } catch (e) {
-    console.log(e);
-  }
-});
+function bytesToAlphanumeric(bytes) {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  bytes.forEach((byte) => {
+    result += chars[byte % chars.length];
+  });
+  return result;
+}
 
 app.post("/loginWallet", async (req, res) => {
   try {
-    const { address, password } = req.body;
-
-    if (!address || !password) {
+    const { address, privateKey } = req.body;
+    if (!address || !privateKey) {
       return res.status(400).json({
         success: false,
         message: "Please Fill up All the Required Fields",
       });
     }
+    const wallet = new ethers.Wallet(privateKey);
+    const _address = wallet.address;
 
-    const user = await Wallet.findOne({ address });
-
-    if (!user) {
-      // Return 401 Unauthorized status code with error message
-      return res.status(401).json({
+    if (address !== address) {
+      return res.status(500).json({
         success: false,
-        message: "User is not Registered with Us Please SignUp to Continue",
+        message: "wallet address or private key wrong , Please Try Again",
       });
     }
-
-    if (await bcrypt.compare(password, user.password)) {
-      const token = jwt.sign(
-        { address: user.address },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "24h",
-        }
-      );
-
-      res.status(200).json({
-        success: true,
-        token,
-        address: user.address,
-        message: "User Login Success",
+    const user = await Wallet.findOne({ address });
+    let token;
+    if (!user) {
+      const randomBytes = ethers.utils.randomBytes(16);
+      const randomAlphanumericString = bytesToAlphanumeric(randomBytes);
+      console.log(`Random Alphanumeric String: ${randomAlphanumericString}`);
+      const jsonFile = await wallet.encrypt(randomAlphanumericString);
+      console.log(jsonFile);
+      const _user = await Wallet.create({
+        address: address,
+        jsonWallet: JSON.stringify(jsonFile),
+        password: randomAlphanumericString,
+      });
+      token = jwt.sign({ address: _user.address }, process.env.JWT_SECRET, {
+        expiresIn: "24h",
       });
     } else {
-      return res.status(401).json({
-        success: false,
-        message: "Password is incorrect",
+      token = jwt.sign({ address: user.address }, process.env.JWT_SECRET, {
+        expiresIn: "24h",
       });
     }
-  } catch (error) {
-    console.error(error);
-    // Return 500 Internal Server Error status code with error message
+
+    res.status(200).json({
+      success: true,
+      token,
+      address: user.address,
+      message: "User Login Success",
+    });
+  } catch (e) {
+    console.log(e);
     return res.status(500).json({
       success: false,
       message: "wallet connection Failure , Please Try Again",
@@ -163,7 +125,7 @@ app.post("/sendTransaction", auth, async (req, res) => {
     } else if (chainId === 100) {
       rpc = ALCHEMY_GNOSIS_RPC_URL;
     } else if (chainId === 11155111) {
-      rpc = ALCHEMY_SEPOLIA_RPC_URL;
+      rpc = ALCHEMY_HOLESKY_RPC_URL;
     } else {
       return res.status(400).json({ error: "chainID not supported" });
     }
@@ -200,9 +162,7 @@ app.post("/sendTransaction", auth, async (req, res) => {
   }
 });
 
-// app.get("/querSubgraph" , (req,res) =>{
-
-// })
+app.post("/sendTransaction");
 
 // listening on port 3000-----------------
 app.listen(PORT, () => {
