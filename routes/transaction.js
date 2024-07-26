@@ -1,7 +1,7 @@
 const { Router } = require("express");
 require("dotenv").config();
 const Wallet = require("../models/user");
-const { ethers, BigNumber } = require("ethers");
+const { ethers } = require("ethers");
 const { auth } = require("../middleware/auth");
 const {
   contractAddresses,
@@ -9,7 +9,7 @@ const {
 } = require("../constants/contractIndex");
 
 const transactionRouter = Router();
-transactionRouter.use(auth);
+// transactionRouter.use(auth);
 
 const ALCHEMY_HOLESKY_RPC_URL = process.env.ALCHEMY_HOLESKY_RPC_URL;
 const ALCHEMY_MAINNET_RPC_URL = process.env.ALCHEMY_MAINNET_RPC_URL;
@@ -39,6 +39,7 @@ const getContract = async (address, chainId) => {
     } else if (chainId === 17000) {
       rpc = ALCHEMY_HOLESKY_RPC_URL;
     }
+    console.log("rpc : ", rpc);
 
     const provider = new ethers.providers.JsonRpcProvider(rpc);
     const wallet = await ethers.Wallet.fromEncryptedJson(
