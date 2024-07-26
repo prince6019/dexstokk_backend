@@ -9,7 +9,7 @@ const {
 } = require("../constants/contractIndex");
 
 const transactionRouter = Router();
-// transactionRouter.use(auth);
+transactionRouter.use(auth);
 
 const ALCHEMY_HOLESKY_RPC_URL = process.env.ALCHEMY_HOLESKY_RPC_URL;
 const ALCHEMY_MAINNET_RPC_URL = process.env.ALCHEMY_MAINNET_RPC_URL;
@@ -32,18 +32,12 @@ const getContract = async (address, chainId) => {
     }
     const jsonObj = JSON.parse(user.jsonWallet);
     let rpc;
-    switch (chainId) {
-      case 1:
-        rpc = ALCHEMY_MAINNET_RPC_URL;
-        break;
-      case 100:
-        rpc = ALCHEMY_GNOSIS_RPC_URL;
-        break;
-      case 17000:
-        rpc = ALCHEMY_HOLESKY_RPC_URL;
-        break;
-      default:
-        break;
+    if (chainId === 1) {
+      rpc = ALCHEMY_MAINNET_RPC_URL;
+    } else if (chainId === 100) {
+      rpc = ALCHEMY_GNOSIS_RPC_URL;
+    } else if (chainId === 17000) {
+      rpc = ALCHEMY_HOLESKY_RPC_URL;
     }
 
     const provider = new ethers.providers.JsonRpcProvider(rpc);
