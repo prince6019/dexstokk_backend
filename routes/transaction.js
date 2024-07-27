@@ -116,7 +116,7 @@ const createOffer = async (req, res) => {
       contractAddresses[chainId],
       newAllowance
     );
-    clg(approveTx);
+    console.log(approveTx);
     const tx = await estokkContract.createOffer(
       offerToken,
       buyerToken,
