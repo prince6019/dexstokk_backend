@@ -10,17 +10,8 @@ const { auth } = require("./middleware/auth");
 const transactionRouter = require("./routes/transaction");
 
 const app = express();
-app.use(express.json());
-app.use(
-  cors({
-    credentials: true,
-    origin: ["http://localhost:5173", "https://dexstokkyam.vercel.app"],
-  })
-);
-app.use("/sendTransaction", transactionRouter);
 
 const uri = process.env.MONGODB_URI;
-
 connect = () => {
   mongoose
     .connect(uri)
@@ -32,6 +23,14 @@ connect = () => {
     });
 };
 connect();
+app.use(express.json());
+app.use(
+  cors({
+    credentials: true,
+    origin: ["http://localhost:5173", "https://dexstokkyam.vercel.app"],
+  })
+);
+app.use("/sendTransaction", transactionRouter);
 
 const PORT = process.env.PORT || 3000;
 

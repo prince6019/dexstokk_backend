@@ -9,7 +9,7 @@ const {
 } = require("../constants/contractIndex");
 
 const transactionRouter = Router();
-// transactionRouter.use(auth);
+transactionRouter.use(auth);
 
 const ALCHEMY_HOLESKY_RPC_URL = process.env.ALCHEMY_HOLESKY_RPC_URL;
 const ALCHEMY_MAINNET_RPC_URL = process.env.ALCHEMY_MAINNET_RPC_URL;
@@ -116,8 +116,7 @@ const createOffer = async (req, res) => {
       contractAddresses[chainId],
       newAllowance
     );
-    await approveTx.wait(1);
-
+    clg(approveTx);
     const tx = await estokkContract.createOffer(
       offerToken,
       buyerToken,
@@ -259,8 +258,7 @@ const deleteOffer = async (req, res) => {
       contractAddresses[chainId],
       newAllowance
     );
-    await approveTx.wait(1);
-
+    console.log(approveTx);
     const tx = await estokkContract.deleteOffer(offerId);
     await tx.wait(1);
     return res.status(200).json({ message: "success", txHash: tx });
